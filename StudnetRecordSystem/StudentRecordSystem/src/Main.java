@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -94,13 +95,8 @@ public class Main extends JFrame {
 
         // Table to display data
         DefaultTableModel model = new DefaultTableModel();
-        Vector<String> columnNames = new Vector<>();
-        columnNames.add("Name");
-        columnNames.add("Registration Number");
-        columnNames.add("Course");
-        columnNames.add("D.O.B");
-        columnNames.add("Timestamp");
-        JTable table = new JTable(new DefaultTableModel(columnNames, 0));
+        model.setColumnIdentifiers(new Object[]{"Name", "Registration Number", "Course", "D.O.B", "Timestamp"});
+        JTable table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBounds(430, 60, 440, 320);
         c.add(scrollPane);
@@ -174,38 +170,14 @@ public class Main extends JFrame {
             } catch (Exception ex) {
                 System.out.println(ex);
             }
+            model.addRow(new Object[]{name, String.valueOf(regNum), course, dob, timestamp});
 
-
-            Vector<Object> row1 = new Vector<>();
-            row1.add(name);
-            row1.add(String.valueOf(regNum));
-            row1.add(course);
-            row1.add(dob);
-            row1.add(timestamp);
-
-
-            Vector<String> columnNames1 = new Vector<>();
-            columnNames1.add("Name");
-            columnNames1.add("Registration Number");
-            columnNames1.add("Course");
-            columnNames1.add("D.O.B");
-            columnNames1.add("Timestamp");
-            Vector<Vector<Object>> data = new Vector<Vector<Object>>();
-            data.add(row1);
-            JTable table1 = new JTable(new DefaultTableModel(data,columnNames1));
-            scrollPane.setViewportView(table1);
-
-
-            c.repaint();
-
-
-        setVisible(true);
+            setVisible(true);
 
         });
 
         editButton.addActionListener(e -> {
-
-
+            selectedRow = table.getSelectedRow();
             if (selectedRow >= 0) {
                 // Get the data from the table's model
                 String name = model.getValueAt(selectedRow, 1).toString(); // Assuming name is at column index 1
@@ -223,16 +195,25 @@ public class Main extends JFrame {
 
                         String sql = "UPDATE data SET Name = ?, Course = ?, DateOfBirth = ?, Timestamp = ? WHERE RegistrationNumber = ?";
 
-                        PreparedStatement pstmt = con.prepareStatement(sql);
+                        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+                            pstmt.setString(1, String.valueOf(regNum));
+                            pstmt.setString(2, course);
+                            pstmt.setString(3, dob);
+                            pstmt.setString(4, timestamp);
+                            pstmt.setString(5, String.valueOf(name));
 
-                        pstmt.setString(1, name);
-                        pstmt.setString(2, course);
-                        pstmt.setString(3, dob);
-                        pstmt.setString(4, timestamp);
-                        pstmt.setInt(5, regNum);
+                            // Debugging: Print the PreparedStatement to check the formed SQL query
+                            System.out.println("Executing SQL: " + pstmt.toString());
 
-                        int rowsAffected = pstmt.executeUpdate();
-                        System.out.println(rowsAffected + " rows updated.");
+                            int rowsAffected = pstmt.executeUpdate();
+                            if (rowsAffected > 0) {
+                                System.out.println(rowsAffected + " rows updated.");
+                            } else {
+                                System.out.println("No rows affected. Please check if the RegistrationNumber exists and the data is correct.");
+                            }
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
 
                         con.close();
                     } catch (Exception ex) {
@@ -264,24 +245,25 @@ public class Main extends JFrame {
                 ResultSetMetaData metaData = rs.getMetaData();
                 int columnCount = metaData.getColumnCount();
 
-                Vector<Vector<Object>> data = new Vector<>();
+
+                Object Name_ = null;
+                Object Reg = null;
+                Object Course = null;
+                Object DOB = null;
+                Object Time_ = null;
                 while (rs.next()) {
                     Vector<Object> vector = new Vector<>();
                     for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
                         vector.add(rs.getObject(columnIndex));
                     }
-                    data.add(vector);
-                }
-                Vector<String> columnNames1 = new Vector<>();
-                columnNames1.add("Name");
-                columnNames1.add("Registration Number");
-                columnNames1.add("Course");
-                columnNames1.add("D.O.B");
-                columnNames1.add("Timestamp");
-                JTable table1 = new JTable(new DefaultTableModel(data,columnNames1));
-                scrollPane.setViewportView(table1);
+                    Name_ = vector.get(0);
+                    Reg = vector.get(1);
+                    Course = vector.get(2);
+                    DOB = vector.get(3);
+                    Time_ = vector.get(4);
 
-                c.repaint();
+                }
+                model.addRow(new Object[]{Name_, Reg, Course, DOB, Time_});
 
                 rs.close();
                 pstmt.close();
@@ -290,8 +272,7 @@ public class Main extends JFrame {
                 System.out.println(ex);
             }
         });
-        table.changeSelection(0, 0, false, false);
-        selectedRow = table.getSelectedRow();
+
         setVisible(true);
     }
 
