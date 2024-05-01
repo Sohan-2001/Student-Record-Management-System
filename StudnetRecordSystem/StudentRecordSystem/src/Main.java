@@ -180,11 +180,11 @@ public class Main extends JFrame {
             selectedRow = table.getSelectedRow();
             if (selectedRow >= 0) {
                 // Get the data from the table's model
-                String name = model.getValueAt(selectedRow, 1).toString(); // Assuming name is at column index 1
+                String name = model.getValueAt(selectedRow, 0).toString(); // Assuming name is at column index 1
                 String course = model.getValueAt(selectedRow, 2).toString(); // Assuming course is at column index 2
                 String dob = model.getValueAt(selectedRow, 3).toString(); // Assuming dob is at column index 3
                 String timestamp = model.getValueAt(selectedRow, 4).toString(); // Assuming timestamp is at column index 4
-                int regNum = Integer.parseInt(model.getValueAt(selectedRow, 0).toString()); // Assuming regNum is at column index 0
+                String regNum =(model.getValueAt(selectedRow, 1).toString()); // Assuming regNum is at column index 0
 
                 if (!name.isEmpty() && !course.isEmpty() && !dob.isEmpty() && !timestamp.isEmpty()) {
 
@@ -196,11 +196,11 @@ public class Main extends JFrame {
                         String sql = "UPDATE data SET Name = ?, Course = ?, DateOfBirth = ?, Timestamp = ? WHERE RegistrationNumber = ?";
 
                         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                            pstmt.setString(1, String.valueOf(regNum));
+                            pstmt.setString(1, name);
                             pstmt.setString(2, course);
                             pstmt.setString(3, dob);
                             pstmt.setString(4, timestamp);
-                            pstmt.setString(5, String.valueOf(name));
+                            pstmt.setString(5, regNum);
 
                             // Debugging: Print the PreparedStatement to check the formed SQL query
                             System.out.println("Executing SQL: " + pstmt.toString());
